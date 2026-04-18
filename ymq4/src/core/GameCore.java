@@ -1,5 +1,7 @@
 package yumaoqou.core;
 
+import yumaoqou.audio.AudioManager;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
@@ -169,6 +171,41 @@ public class GameCore {
         this.stickMen = new ArrayList<>();
 
         resetGame();
+    }
+
+    /**
+     * 播放击球音效
+     */
+    private void playHitSound() {
+        AudioManager.getInstance().playHitSound();
+    }
+
+    /**
+     * 播放发球音效
+     */
+    private void playServeSound() {
+        AudioManager.getInstance().playServeSound();
+    }
+
+    /**
+     * 播放得分音效
+     */
+    private void playScoreSound() {
+        AudioManager.getInstance().playScoreSound();
+    }
+
+    /**
+     * 播放扣杀音效
+     */
+    private void playSmashSound() {
+        AudioManager.getInstance().playSmashSound();
+    }
+
+    /**
+     * 播放闪避音效
+     */
+    private void playDashSound() {
+        AudioManager.getInstance().playDashSound();
     }
 
     public void setGameMode(int mode, int diff) {
@@ -678,6 +715,7 @@ public class GameCore {
                 lastShotType = "SERVE";
 
                 addBigExplosion(ballX, ballY, new Color(255, 200, 0), 30);
+                playServeSound();
 
             } else if (!isPlayer1 && charging2 && server == 2) {
                 long maxChargeTime = MAX_CHARGE_TIME_SERVE;
@@ -694,6 +732,7 @@ public class GameCore {
                 lastShotType = "SERVE";
 
                 addBigExplosion(ballX, ballY, new Color(255, 200, 0), 30);
+                playServeSound();
 
                 // AI 重置状态
                 aiIsCharging = false;
@@ -741,6 +780,13 @@ public class GameCore {
                     updateCombo();
 
                     addHitEffect(ballX, ballY, isSmash ? new Color(255, 100, 0) : new Color(70, 130, 200), powerFactor);
+                    
+                    // 播放击球音效
+                    if (isSmash) {
+                        playSmashSound();
+                    } else {
+                        playHitSound();
+                    }
                 } else {
                     addSwingMissEffect(true);
                 }
@@ -789,6 +835,13 @@ public class GameCore {
                     updateCombo();
 
                     addHitEffect(ballX, ballY, isSmash ? new Color(255, 100, 0) : new Color(200, 70, 70), powerFactor);
+                    
+                    // 播放击球音效
+                    if (isSmash) {
+                        playSmashSound();
+                    } else {
+                        playHitSound();
+                    }
                 } else {
                     addSwingMissEffect(false);
                 }
@@ -830,6 +883,7 @@ public class GameCore {
             }
 
             addDashEffect(player1X, player1Y, true);
+            playDashSound();
         } else if (!isPlayer1 && player2Energy >= 20 && !player2Dash) {
             player2Energy -= 20;
             player2Dash = true;
@@ -842,6 +896,7 @@ public class GameCore {
             }
 
             addDashEffect(player2X, player2Y, false);
+            playDashSound();
         }
     }
 
@@ -1118,12 +1173,14 @@ public class GameCore {
             if (score2 >= WIN_SCORE) gameRunning = false;
             server = 2;
             addBigExplosion(ballX, ballY, new Color(139, 69, 19), 30);
+            playScoreSound();
             resetAfterPoint();
         } else if (ballX >= WIDTH - BALL_SIZE - 20) {
             score1 += (comboCount > 1) ? 2 : 1;
             if (score1 >= WIN_SCORE) gameRunning = false;
             server = 1;
             addBigExplosion(ballX, ballY, new Color(139, 69, 19), 30);
+            playScoreSound();
             resetAfterPoint();
         }
     }

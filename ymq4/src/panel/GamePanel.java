@@ -3,10 +3,13 @@ package yumaoqou.panel;
 import yumaoqou.core.GameCore;
 import yumaoqou.window.GameWindow;
 import yumaoqou.util.FontManager;
+import util.ImageManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public class GamePanel extends JPanel implements KeyListener, Runnable {
@@ -24,11 +27,13 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private int difficulty = GameCore.DIFF_MEDIUM;
 
     private FontManager fontManager;
+    private ImageManager imageManager;
 
     public GamePanel(GameWindow gameWindow) {
         this.gameWindow = gameWindow;
         this.gameCore = new GameCore();
         this.fontManager = FontManager.getInstance();
+        this.imageManager = ImageManager.getInstance();
 
         setPreferredSize(new Dimension(GameCore.WIDTH, GameCore.HEIGHT));
         setFocusable(true);
@@ -113,9 +118,17 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     }
 
     private void drawBackground(Graphics2D g2d) {
-        g2d.setPaint(skyGradient);
-        g2d.fillRect(0, 0, GameCore.WIDTH, GameCore.HEIGHT);
+        // 尝试使用外部背景图片
+        BufferedImage bgImage = imageManager.getImage("background");
+        if (bgImage != null) {
+            g2d.drawImage(bgImage, 0, 0, GameCore.WIDTH, GameCore.HEIGHT, null);
+        } else {
+            // 使用渐变背景
+            g2d.setPaint(skyGradient);
+            g2d.fillRect(0, 0, GameCore.WIDTH, GameCore.HEIGHT);
+        }
 
+        // 绘制云朵（使用图片或默认绘制）
         drawCloud(g2d, 100, 80, 60);
         drawCloud(g2d, 400, 50, 80);
         drawCloud(g2d, 800, 100, 70);
@@ -165,13 +178,20 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     }
 
     private void drawCloud(Graphics2D g2d, int x, int y, int size) {
-        g2d.setColor(new Color(255, 255, 255, 180));
-        Ellipse2D.Double cloud1 = new Ellipse2D.Double(x, y, size, size * 0.7);
-        Ellipse2D.Double cloud2 = new Ellipse2D.Double(x + size * 0.6, y - size * 0.2, size * 0.8, size * 0.6);
-        Ellipse2D.Double cloud3 = new Ellipse2D.Double(x - size * 0.2, y - size * 0.1, size * 0.7, size * 0.6);
-        g2d.fill(cloud1);
-        g2d.fill(cloud2);
-        g2d.fill(cloud3);
+        // 尝试使用云朵图片
+        BufferedImage cloudImage = imageManager.getImage("cloud");
+        if (cloudImage != null) {
+            g2d.drawImage(cloudImage, x, y, size, (int)(size * 0.6), null);
+        } else {
+            // 默认绘制云朵
+            g2d.setColor(new Color(255, 255, 255, 180));
+            Ellipse2D.Double cloud1 = new Ellipse2D.Double(x, y, size, size * 0.7);
+            Ellipse2D.Double cloud2 = new Ellipse2D.Double(x + size * 0.6, y - size * 0.2, size * 0.8, size * 0.6);
+            Ellipse2D.Double cloud3 = new Ellipse2D.Double(x - size * 0.2, y - size * 0.1, size * 0.7, size * 0.6);
+            g2d.fill(cloud1);
+            g2d.fill(cloud2);
+            g2d.fill(cloud3);
+        }
     }
 
     private void drawCourt(Graphics2D g2d) {
@@ -397,40 +417,56 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     }
 
     private void drawBadmintonRacket(Graphics2D g2d, float x, float y, boolean isLeft, float swingProgress) {
-        g2d.setColor(new Color(0, 0, 0, 80));
-        g2d.drawOval((int)x - 13, (int)y - 19, 26, 32);
+        // 尝试使用球拍图片
+        BufferedImage racketImage = imageManager.getImage("racket");
+        if (racketImage != null) {
+            int width = 30;
+            int height = 50;
+            if (!isLeft) {
+                // 右侧玩家翻转图片
+                g2d.drawImage(racketImage, (int)x - width/2, (int)y - height/2, 
+                        (int)x + width/2, (int)y + height/2, 
+                        racketImage.getWidth(), 0, 0, racketImage.getHeight(), null);
+            } else {
+                g2d.drawImage(racketImage, (int)x - width/2, (int)y - height/2, width, height, null);
+            }
+        } else {
+            // 默认绘制球拍
+            g2d.setColor(new Color(0, 0, 0, 80));
+            g2d.drawOval((int)x - 13, (int)y - 19, 26, 32);
 
-        g2d.setColor(new Color(180, 100, 50));
-        g2d.setStroke(new BasicStroke(3));
-        g2d.drawOval((int)x - 13, (int)y - 19, 26, 32);
+            g2d.setColor(new Color(180, 100, 50));
+            g2d.setStroke(new BasicStroke(3));
+            g2d.drawOval((int)x - 13, (int)y - 19, 26, 32);
 
-        g2d.setColor(new Color(255, 255, 255, 200));
-        g2d.setStroke(new BasicStroke(1));
-        for (int i = 0; i < 4; i++) {
-            int yOffset = (int)y - 13 + i * 8;
-            g2d.drawLine((int)x - 10, yOffset, (int)x + 10, yOffset);
-        }
-        for (int i = 0; i < 3; i++) {
-            int xOffset = (int)x - 6 + i * 6;
-            g2d.drawLine(xOffset, (int)y - 15, xOffset, (int)y + 9);
-        }
+            g2d.setColor(new Color(255, 255, 255, 200));
+            g2d.setStroke(new BasicStroke(1));
+            for (int i = 0; i < 4; i++) {
+                int yOffset = (int)y - 13 + i * 8;
+                g2d.drawLine((int)x - 10, yOffset, (int)x + 10, yOffset);
+            }
+            for (int i = 0; i < 3; i++) {
+                int xOffset = (int)x - 6 + i * 6;
+                g2d.drawLine(xOffset, (int)y - 15, xOffset, (int)y + 9);
+            }
 
-        g2d.setColor(new Color(139, 69, 19));
-        g2d.setStroke(new BasicStroke(4));
-        g2d.drawLine((int)x, (int)y + 13, (int)x, (int)y + 40);
+            g2d.setColor(new Color(139, 69, 19));
+            g2d.setStroke(new BasicStroke(4));
+            g2d.drawLine((int)x, (int)y + 13, (int)x, (int)y + 40);
 
-        g2d.setColor(new Color(100, 50, 20));
-        g2d.fillRect((int)x - 4, (int)y + 38, 8, 15);
+            g2d.setColor(new Color(100, 50, 20));
+            g2d.fillRect((int)x - 4, (int)y + 38, 8, 15);
 
-        if (swingProgress > 0) {
-            g2d.setColor(new Color(255, 255, 200, (int)(100 * (1 - swingProgress))));
-            g2d.setStroke(new BasicStroke(2));
-            for (int i = 0; i < 5; i++) {
-                float offset = swingProgress * 30 * i;
-                if (isLeft) {
-                    g2d.drawLine((int)(x - offset), (int)(y - offset), (int)(x - offset + 10), (int)(y - offset - 5));
-                } else {
-                    g2d.drawLine((int)(x + offset), (int)(y - offset), (int)(x + offset - 10), (int)(y - offset - 5));
+            if (swingProgress > 0) {
+                g2d.setColor(new Color(255, 255, 200, (int)(100 * (1 - swingProgress))));
+                g2d.setStroke(new BasicStroke(2));
+                for (int i = 0; i < 5; i++) {
+                    float offset = swingProgress * 30 * i;
+                    if (isLeft) {
+                        g2d.drawLine((int)(x - offset), (int)(y - offset), (int)(x - offset + 10), (int)(y - offset - 5));
+                    } else {
+                        g2d.drawLine((int)(x + offset), (int)(y - offset), (int)(x + offset - 10), (int)(y - offset - 5));
+                    }
                 }
             }
         }
@@ -441,36 +477,43 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         float by = gameCore.getBallY();
         float spin = gameCore.getBallSpin();
 
-        g2d.setColor(new Color(0, 0, 0, 80));
-        g2d.fillOval((int)bx + 2, (int)by + 4, GameCore.BALL_SIZE, GameCore.BALL_SIZE);
+        // 尝试使用羽毛球图片
+        BufferedImage ballImage = imageManager.getImage("ball");
+        if (ballImage != null) {
+            g2d.drawImage(ballImage, (int)bx, (int)by, GameCore.BALL_SIZE, GameCore.BALL_SIZE, null);
+        } else {
+            // 默认绘制羽毛球
+            g2d.setColor(new Color(0, 0, 0, 80));
+            g2d.fillOval((int)bx + 2, (int)by + 4, GameCore.BALL_SIZE, GameCore.BALL_SIZE);
 
-        double spinOffset = spin * 0.1;
+            double spinOffset = spin * 0.1;
 
-        RadialGradientPaint ballGrad = new RadialGradientPaint(
-                bx + 5 + (float)spinOffset, by + 5, GameCore.BALL_SIZE,
-                new float[]{0f, 0.6f, 1f},
-                new Color[]{Color.WHITE, new Color(240, 240, 240), new Color(200, 200, 200)}
-        );
-        g2d.setPaint(ballGrad);
-        g2d.fillOval((int)bx, (int)by, GameCore.BALL_SIZE, GameCore.BALL_SIZE);
+            RadialGradientPaint ballGrad = new RadialGradientPaint(
+                    bx + 5 + (float)spinOffset, by + 5, GameCore.BALL_SIZE,
+                    new float[]{0f, 0.6f, 1f},
+                    new Color[]{Color.WHITE, new Color(240, 240, 240), new Color(200, 200, 200)}
+            );
+            g2d.setPaint(ballGrad);
+            g2d.fillOval((int)bx, (int)by, GameCore.BALL_SIZE, GameCore.BALL_SIZE);
 
-        g2d.setColor(new Color(255, 255, 255, 180));
-        g2d.fillOval((int)bx + 3, (int)by + 3, 5, 5);
+            g2d.setColor(new Color(255, 255, 255, 180));
+            g2d.fillOval((int)bx + 3, (int)by + 3, 5, 5);
 
-        g2d.setColor(new Color(255, 255, 255, 150));
-        g2d.setStroke(new BasicStroke(1.5f));
-        int centerX = (int)bx + GameCore.BALL_SIZE/2;
-        int centerY = (int)by + GameCore.BALL_SIZE/2;
+            g2d.setColor(new Color(255, 255, 255, 150));
+            g2d.setStroke(new BasicStroke(1.5f));
+            int centerX = (int)bx + GameCore.BALL_SIZE/2;
+            int centerY = (int)by + GameCore.BALL_SIZE/2;
 
-        for (int i = 0; i < 8; i++) {
-            double angle = i * Math.PI / 4 + spin * 0.05;
-            int x2 = centerX + (int)(Math.cos(angle) * 12);
-            int y2 = centerY + (int)(Math.sin(angle) * 12);
-            g2d.drawLine(centerX, centerY, x2, y2);
+            for (int i = 0; i < 8; i++) {
+                double angle = i * Math.PI / 4 + spin * 0.05;
+                int x2 = centerX + (int)(Math.cos(angle) * 12);
+                int y2 = centerY + (int)(Math.sin(angle) * 12);
+                g2d.drawLine(centerX, centerY, x2, y2);
 
-            int x3 = x2 + (int)(Math.cos(angle + Math.PI/2) * 3);
-            int y3 = y2 + (int)(Math.sin(angle + Math.PI/2) * 3);
-            g2d.drawLine(x2, y2, x3, y3);
+                int x3 = x2 + (int)(Math.cos(angle + Math.PI/2) * 3);
+                int y3 = y2 + (int)(Math.sin(angle + Math.PI/2) * 3);
+                g2d.drawLine(x2, y2, x3, y3);
+            }
         }
     }
 
