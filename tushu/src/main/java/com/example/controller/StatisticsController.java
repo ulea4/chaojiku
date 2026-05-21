@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,12 +37,11 @@ public class StatisticsController {
                 .average()
                 .orElse(0.0);
         
-        Map<String, Object> stats = Map.of(
-            "totalBooks", totalBooks,
-            "availableBooks", availableBooks,
-            "outOfStockBooks", outOfStockBooks,
-            "averageStock", averageStock
-        );
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalBooks", totalBooks);
+        stats.put("availableBooks", availableBooks);
+        stats.put("outOfStockBooks", outOfStockBooks);
+        stats.put("averageStock", averageStock);
         
         return ResponseEntity.ok(stats);
     }
@@ -50,15 +50,22 @@ public class StatisticsController {
     public ResponseEntity<List<Map<String, Object>>> getTopAuthors() {
         List<BookDTO> books = bookService.findAll();
         
-        return ResponseEntity.ok(books.stream()
+        List<Map<String, Object>> topAuthors = books.stream()
                 .collect(Collectors.groupingBy(
                     BookDTO::getAuthor,
                     Collectors.counting()
                 ))
                 .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
                 .limit(5)
-                .map(entry -> Map.of("author", entry.getKey(), "bookCount", entry.getValue()))
-                .collect(Collectors.toList()));
+                .map(entry -> {
+                    Map<String, Object> authorMap = new HashMap<>();
+                    authorMap.put("author", entry.getKey());
+                    authorMap.put("bookCount", entry.getValue());
+                    return authorMap;
+                })
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(topAuthors);
     }
 }

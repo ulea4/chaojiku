@@ -46,7 +46,22 @@ public class BookController {
     
     @GetMapping("/search/title")
     public ResponseEntity<List<BookDTO>> searchByTitle(@RequestParam String title) {
-        return ResponseEntity.ok(bookService.searchByTitle(title));
+        try {
+            System.out.println("==============================");
+            System.out.println("开始搜索图书，关键词：" + title);
+            System.out.println("==============================");
+            List<BookDTO> result = bookService.searchByTitle(title);
+            System.out.println("搜索结果数量：" + result.size());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("========================================");
+            System.err.println("搜索图书时发生错误：");
+            System.err.println("错误类型：" + e.getClass().getName());
+            System.err.println("错误信息：" + e.getMessage());
+            System.err.println("========================================");
+            e.printStackTrace();
+            throw e;
+        }
     }
     
     @GetMapping("/search/author")

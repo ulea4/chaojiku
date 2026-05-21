@@ -48,23 +48,57 @@ public class BookServiceImpl implements BookService {
     
     @Override
     public List<BookDTO> searchByTitle(String title) {
-        return bookRepository.findByTitleContaining(title).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        System.out.println("=== searchByTitle 开始，title=" + title + " ===");
+        try {
+            List<Book> allBooks = bookRepository.findAll();
+            System.out.println("总图书数：" + allBooks.size());
+            
+            List<BookDTO> result = allBooks.stream()
+                    .filter(book -> book.getTitle() != null && book.getTitle().contains(title))
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+            
+            System.out.println("搜索结果数：" + result.size());
+            return result;
+        } catch (Exception e) {
+            System.err.println("=== searchByTitle 异常 ===");
+            e.printStackTrace();
+            return List.of();
+        }
     }
     
     @Override
     public List<BookDTO> searchByAuthor(String author) {
-        return bookRepository.findByAuthorContaining(author).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        System.out.println("=== searchByAuthor 开始，author=" + author + " ===");
+        try {
+            List<Book> allBooks = bookRepository.findAll();
+            System.out.println("总图书数：" + allBooks.size());
+            
+            List<BookDTO> result = allBooks.stream()
+                    .filter(book -> book.getAuthor() != null && book.getAuthor().contains(author))
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+            
+            System.out.println("搜索结果数：" + result.size());
+            return result;
+        } catch (Exception e) {
+            System.err.println("=== searchByAuthor 异常 ===");
+            e.printStackTrace();
+            return List.of();
+        }
     }
     
     @Override
     public List<BookDTO> searchByIsbn(String isbn) {
-        return bookRepository.findByIsbn(isbn).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        try {
+            List<Book> books = bookRepository.findByIsbn(isbn);
+            return books.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
     }
     
     private BookDTO convertToDTO(Book book) {
