@@ -4,496 +4,521 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>图书管理系统</title>
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://unpkg.com/element-plus"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus@2.4.4/dist/index.css">
+    <script src="https://unpkg.com/vue@3.3.11/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus@2.4.4/dist/index.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
             background: #f5f7fa;
         }
-        
-        #app {
-            min-height: 100vh;
-        }
-        
+        #app { min-height: 100vh; }
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
+            color: white; padding: 20px; text-align: center;
             box-shadow: 0 2px 12px rgba(0,0,0,0.1);
         }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-        
+        .header h1 { font-size: 28px; margin-bottom: 6px; }
+        .header p { opacity: 0.85; }
+        .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
         .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 24px;
         }
-        
         .stat-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            transition: transform 0.3s;
+            background: white; border-radius: 10px; padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); transition: transform 0.3s;
         }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-card h3 {
-            color: #667eea;
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-        
-        .stat-card p {
-            color: #909399;
-            font-size: 14px;
-        }
-        
+        .stat-card:hover { transform: translateY(-4px); }
+        .stat-card h3 { color: #667eea; font-size: 30px; margin-bottom: 6px; }
+        .stat-card p { color: #909399; font-size: 14px; }
+        .stat-card.green h3 { color: #67c23a; }
+        .stat-card.orange h3 { color: #e6a23c; }
+        .stat-card.red h3 { color: #f56c6c; }
         .toolbar {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            background: white; padding: 16px 20px; border-radius: 10px;
+            margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px;
         }
-        
-        .search-box {
-            display: flex;
-            gap: 10px;
-            flex: 1;
-            min-width: 300px;
-        }
-        
-        .data-table {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        }
-        
-        .pagination {
-            margin-top: 20px;
-            display: flex;
-            justify-content: flex-end;
-        }
+        .search-box { display: flex; gap: 10px; flex: 1; min-width: 280px; }
+        .tab-section { margin-bottom: 20px; }
+        .borrow-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     </style>
 </head>
 <body>
-    <div id="app">
-        <div class="header">
-            <h1>📚 图书管理系统</h1>
-            <p>Library Management System</p>
-        </div>
-        
-        <div class="container">
-            <!-- 统计卡片 -->
-            <div class="stats-cards">
-                <div class="stat-card">
-                    <h3>{{ stats.totalBooks }}</h3>
-                    <p>图书总数</p>
-                </div>
-                <div class="stat-card">
-                    <h3>{{ stats.availableBooks }}</h3>
-                    <p>可借图书</p>
-                </div>
-                <div class="stat-card">
-                    <h3>{{ stats.totalUsers }}</h3>
-                    <p>用户总数</p>
-                </div>
-                <div class="stat-card">
-                    <h3>{{ stats.totalBorrows }}</h3>
-                    <p>借阅记录</p>
-                </div>
-            </div>
-            
-            <!-- 工具栏 -->
-            <div class="toolbar">
-                <div class="search-box">
-                    <el-input 
-                        v-model="searchQuery" 
-                        placeholder="搜索书名或作者..."
-                        clearable
-                        @clear="loadBooks">
-                        <template #append>
-                            <el-button @click="searchBooks" :loading="loading">搜索</el-button>
-                        </template>
-                    </el-input>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <el-button type="success" @click="showUserDialog">
-                        👥 用户管理
-                    </el-button>
-                    <el-button type="warning" @click="showBorrowDialog">
-                        📖 借阅管理
-                    </el-button>
-                    <el-button type="primary" @click="showAddDialog">
-                        ➕ 添加图书
-                    </el-button>
-                </div>
-            </div>
-            
-            <!-- 图书表格 -->
-            <div class="data-table">
-                <el-table :data="books" stripe style="width: 100%" v-loading="loading">
-                    <el-table-column prop="id" label="ID" width="80"></el-table-column>
-                    <el-table-column prop="isbn" label="ISBN" width="180"></el-table-column>
-                    <el-table-column prop="title" label="书名" min-width="200"></el-table-column>
-                    <el-table-column prop="author" label="作者" width="150"></el-table-column>
-                    <el-table-column prop="publisher" label="出版社" width="150"></el-table-column>
-                    <el-table-column prop="price" label="价格" width="100">
-                        <template #default="scope">
-                            ¥{{ scope.row.price }}
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="stockCount" label="库存" width="100">
-                        <template #default="scope">
-                            <el-tag :type="scope.row.stockCount > 0 ? 'success' : 'danger'">
-                                {{ scope.row.stockCount }}
-                            </el-tag>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="操作" width="220" fixed="right">
-                        <template #default="scope">
-                            <el-button size="small" type="primary" @click="editBook(scope.row)">编辑</el-button>
-                            <el-popconfirm
-                                title="确定要删除这本书吗？"
-                                @confirm="deleteBook(scope.row)">
-                                <template #reference>
-                                    <el-button size="small" type="danger">删除</el-button>
-                                </template>
-                            </el-popconfirm>
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </div>
-            
-            <!-- 添加/编辑图书对话框 -->
-            <el-dialog 
-                v-model="bookDialogVisible" 
-                :title="isEdit ? '编辑图书' : '添加图书'"
-                width="600px">
-                <el-form :model="bookForm" label-width="100px">
-                    <el-form-item label="ISBN">
-                        <el-input v-model="bookForm.isbn" placeholder="请输入ISBN"></el-input>
-                    </el-form-item>
-                    <el-form-item label="书名">
-                        <el-input v-model="bookForm.title" placeholder="请输入书名"></el-input>
-                    </el-form-item>
-                    <el-form-item label="作者">
-                        <el-input v-model="bookForm.author" placeholder="请输入作者"></el-input>
-                    </el-form-item>
-                    <el-form-item label="出版社">
-                        <el-input v-model="bookForm.publisher" placeholder="请输入出版社"></el-input>
-                    </el-form-item>
-                    <el-form-item label="价格">
-                        <el-input-number v-model="bookForm.price" :min="0" :precision="2"></el-input-number>
-                    </el-form-item>
-                    <el-form-item label="库存">
-                        <el-input-number v-model="bookForm.stockCount" :min="0"></el-input-number>
-                    </el-form-item>
-                    <el-form-item label="描述">
-                        <el-input 
-                            v-model="bookForm.description" 
-                            type="textarea" 
-                            :rows="3"
-                            placeholder="请输入描述">
-                        </el-input>
-                    </el-form-item>
-                </el-form>
-                <template #footer>
-                    <el-button @click="bookDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="saveBook">保存</el-button>
-                </template>
-            </el-dialog>
-                            
-            <!-- 用户管理对话框 -->
-            <el-dialog v-model="userDialogVisible" title="用户管理" width="800px">
-                <el-table :data="users" stripe>
-                    <el-table-column prop="id" label="ID" width="80"></el-table-column>
-                    <el-table-column prop="username" label="用户名" width="150"></el-table-column>
-                    <el-table-column prop="realName" label="姓名" width="120"></el-table-column>
-                    <el-table-column prop="phone" label="电话" width="150"></el-table-column>
-                    <el-table-column prop="email" label="邮箱"></el-table-column>
-                </el-table>
-            </el-dialog>
-                            
-            <!-- 借阅管理对话框 -->
-            <el-dialog v-model="borrowDialogVisible" title="借阅管理" width="900px">
-                <el-table :data="borrows" stripe>
-                    <el-table-column prop="id" label="ID" width="80"></el-table-column>
-                    <el-table-column prop="userId" label="用户ID" width="100"></el-table-column>
-                    <el-table-column prop="userName" label="用户" width="120"></el-table-column>
-                    <el-table-column prop="bookId" label="图书ID" width="100"></el-table-column>
-                    <el-table-column prop="bookTitle" label="图书" width="150"></el-table-column>
-                    <el-table-column prop="borrowDate" label="借阅日期" width="180"></el-table-column>
-                    <el-table-column prop="status" label="状态" width="100">
-                        <template #default="scope">
-                            <el-tag :type="scope.row.status === 'BORROWED' ? 'warning' : 'success'">
-                                {{ scope.row.status === 'BORROWED' ? '借阅中' : '已归还' }}
-                            </el-tag>
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </el-dialog>
-        </div>
+<div id="app">
+    <div class="header">
+        <h1>📚 图书管理系统</h1>
+        <p>Library Management System</p>
     </div>
-    
-    <script>
-        const { createApp, ref, onMounted } = Vue;
-        const API_BASE = 'http://localhost:8081/api';
-        
-        createApp({
-            setup() {
-                const books = ref([]);
-                const users = ref([]);
-                const borrows = ref([]);
-                const loading = ref(false);
-                const searchQuery = ref('');
-                const bookDialogVisible = ref(false);
-                const userDialogVisible = ref(false);
-                const borrowDialogVisible = ref(false);
-                const isEdit = ref(false);
-                const stats = ref({
-                    totalBooks: 0,
-                    availableBooks: 0,
-                    totalUsers: 0,
-                    totalBorrows: 0
-                });
-                
-                const bookForm = ref({
-                    id: null,
-                    isbn: '',
-                    title: '',
-                    author: '',
-                    publisher: '',
-                    price: 0,
-                    stockCount: 0,
-                    description: ''
-                });
-                
-                // 加载图书列表
-                const loadBooks = async () => {
-                    loading.value = true;
-                    try {
-                        const response = await fetch(`${API_BASE}/books`);
-                        books.value = await response.json();
-                    } catch (error) {
-                        ElementPlus.ElMessage.error('加载图书失败');
-                    }
-                    loading.value = false;
-                };
-                
-                // 搜索图书
-                const searchBooks = async () => {
-                    if (!searchQuery.value) {
-                        loadBooks();
-                        return;
-                    }
-                    loading.value = true;
-                    try {
-                        console.log('开始搜索:', searchQuery.value);
-                        const url = `${API_BASE}/books/search/title?title=${encodeURIComponent(searchQuery.value)}`;
-                        console.log('请求URL:', url);
-                        
-                        const response = await fetch(url);
-                        console.log('响应状态:', response.status);
-                        
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        
-                        const data = await response.json();
-                        console.log('搜索结果:', data);
-                        books.value = data;
-                        ElementPlus.ElMessage.success(`找到 ${data.length} 本书`);
-                    } catch (error) {
-                        console.error('搜索错误:', error);
-                        ElementPlus.ElMessage.error('搜索失败: ' + error.message);
-                        // 搜索失败时重新加载所有图书
-                        loadBooks();
-                    } finally {
-                        loading.value = false;
-                    }
-                };
-                
-                // 显示添加对话框
-                const showAddDialog = () => {
-                    isEdit.value = false;
-                    bookForm.value = {
-                        id: null,
-                        isbn: '',
-                        title: '',
-                        author: '',
-                        publisher: '',
-                        price: 0,
-                        stockCount: 0,
-                        description: ''
-                    };
-                    bookDialogVisible.value = true;
-                };
-                
-                // 显示用户管理
-                const showUserDialog = async () => {
-                    userDialogVisible.value = true;
-                    try {
-                        const response = await fetch(`${API_BASE}/users`);
-                        users.value = await response.json();
-                    } catch (error) {
-                        ElementPlus.ElMessage.error('加载用户失败');
-                    }
-                };
-                
-                // 显示借阅管理
-                const showBorrowDialog = async () => {
-                    borrowDialogVisible.value = true;
-                    try {
-                        const response = await fetch(`${API_BASE}/borrow-records`);
-                        const data = await response.json();
-                        // 添加用户名和书名
-                        borrows.value = data;
-                    } catch (error) {
-                        ElementPlus.ElMessage.error('加载借阅记录失败');
-                    }
-                };
-                
-                // 编辑图书
-                const editBook = (book) => {
-                    isEdit.value = true;
-                    bookForm.value = { ...book };
-                    bookDialogVisible.value = true;
-                };
-                
-                // 保存图书
-                const saveBook = async () => {
-                    if (!bookForm.value.title || !bookForm.value.author) {
-                        ElementPlus.ElMessage.warning('请填写书名和作者');
-                        return;
-                    }
-                    
-                    try {
-                        let response;
-                        if (isEdit.value) {
-                            response = await fetch(`${API_BASE}/books/${bookForm.value.id}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(bookForm.value)
-                            });
-                        } else {
-                            response = await fetch(`${API_BASE}/books`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(bookForm.value)
-                            });
-                        }
-                        
-                        if (response.ok) {
-                            ElementPlus.ElMessage.success(isEdit.value ? '更新成功' : '添加成功');
-                            bookDialogVisible.value = false;
-                            loadBooks();
-                            loadStats();
-                        } else {
-                            ElementPlus.ElMessage.error('保存失败');
-                        }
-                    } catch (error) {
-                        ElementPlus.ElMessage.error('保存失败：' + error.message);
-                    }
-                };
-                
-                // 删除图书
-                const deleteBook = async (book) => {
-                    try {
-                        const response = await fetch(`${API_BASE}/books/${book.id}`, {
-                            method: 'DELETE'
-                        });
-                        if (response.ok) {
-                            ElementPlus.ElMessage.success('删除成功');
-                            loadBooks();
-                            loadStats();
-                        } else {
-                            ElementPlus.ElMessage.error('删除失败');
-                        }
-                    } catch (error) {
-                        ElementPlus.ElMessage.error('删除失败：' + error.message);
-                    }
-                };
-                
-                // 加载统计数据
-                const loadStats = async () => {
-                    try {
-                        const [booksRes, usersRes] = await Promise.all([
-                            fetch(`${API_BASE}/books`),
-                            fetch(`${API_BASE}/users`)
-                        ]);
-                        const booksData = await booksRes.json();
-                        const usersData = await usersRes.json();
-                        
-                        stats.value = {
-                            totalBooks: booksData.length,
-                            availableBooks: booksData.filter(b => b.stockCount > 0).length,
-                            totalUsers: usersData.length,
-                            totalBorrows: 0
-                        };
-                    } catch (error) {
-                        console.error('加载统计失败', error);
-                    }
-                };
-                
-                onMounted(() => {
-                    loadBooks();
-                    loadStats();
-                });
-                
-                return {
-                    books,
-                    users,
-                    borrows,
-                    loading,
-                    searchQuery,
-                    bookDialogVisible,
-                    userDialogVisible,
-                    borrowDialogVisible,
-                    isEdit,
-                    stats,
-                    bookForm,
-                    loadBooks,
-                    searchBooks,
-                    showAddDialog,
-                    showUserDialog,
-                    showBorrowDialog,
-                    editBook,
-                    saveBook,
-                    deleteBook
-                };
+
+    <div class="container">
+        <!-- 统计卡片 -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h3>{{ stats.totalBooks }}</h3>
+                <p>📖 图书总数</p>
+            </div>
+            <div class="stat-card green">
+                <h3>{{ stats.availableBooks }}</h3>
+                <p>✅ 可借图书</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ stats.totalUsers }}</h3>
+                <p>👥 用户总数</p>
+            </div>
+            <div class="stat-card orange">
+                <h3>{{ stats.activeBorrows }}</h3>
+                <p>📕 当前借出</p>
+            </div>
+            <div class="stat-card red">
+                <h3>{{ stats.totalBorrows }}</h3>
+                <p>📋 借阅总记录</p>
+            </div>
+        </div>
+
+        <!-- 功能标签页 -->
+        <el-tabs v-model="activeTab" type="border-card" class="tab-section">
+
+            <!-- ========== 图书管理 ========== -->
+            <el-tab-pane label="📚 图书管理" name="books">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <el-input v-model="searchQuery" placeholder="搜索书名或作者..." clearable @clear="loadBooks"
+                            @keyup.enter="searchBooks">
+                            <template #append>
+                                <el-button @click="searchBooks" :loading="loading">搜索</el-button>
+                            </template>
+                        </el-input>
+                    </div>
+                    <el-button type="primary" @click="showAddBookDialog">➕ 添加图书</el-button>
+                </div>
+                <div>
+                    <el-table :data="books" stripe v-loading="loading" :max-height="500">
+                        <el-table-column label="ID" width="70">
+                            <template #default="scope">{{ scope.row.id }}</template>
+                        </el-table-column>
+                        <el-table-column label="ISBN" width="160">
+                            <template #default="scope">{{ scope.row.isbn }}</template>
+                        </el-table-column>
+                        <el-table-column label="书名" min-width="160">
+                            <template #default="scope">{{ scope.row.title }}</template>
+                        </el-table-column>
+                        <el-table-column label="作者" width="120">
+                            <template #default="scope">{{ scope.row.author }}</template>
+                        </el-table-column>
+                        <el-table-column label="出版社" width="130">
+                            <template #default="scope">{{ scope.row.publisher }}</template>
+                        </el-table-column>
+                        <el-table-column label="价格" width="80">
+                            <template #default="scope">¥{{ scope.row.price }}</template>
+                        </el-table-column>
+                        <el-table-column label="库存" width="80">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.stockCount > 0 ? 'success' : 'danger'" size="small">
+                                    {{ scope.row.stockCount }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="230">
+                            <template #default="scope">
+                                <el-button size="small" type="success" :disabled="scope.row.stockCount <= 0"
+                                    @click="openQuickBorrow(scope.row)">借出</el-button>
+                                <el-button size="small" type="primary" @click="editBook(scope.row)">编辑</el-button>
+                                <el-popconfirm title="确定删除？" @confirm="deleteBook(scope.row)">
+                                    <template #reference>
+                                        <el-button size="small" type="danger">删除</el-button>
+                                    </template>
+                                </el-popconfirm>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </el-tab-pane>
+
+            <!-- ========== 借阅管理 ========== -->
+            <el-tab-pane label="📖 借阅管理" name="borrows">
+                <div class="toolbar">
+                    <div class="filter-bar">
+                        <el-select v-model="borrowFilter.status" placeholder="状态筛选" clearable style="width:140px"
+                            @change="loadBorrows">
+                            <el-option label="全部" value="" />
+                            <el-option label="借阅中" value="BORROWED" />
+                            <el-option label="已归还" value="RETURNED" />
+                        </el-select>
+                        <el-select v-model="borrowFilter.userId" placeholder="按用户筛选" clearable filterable
+                            style="width:180px" @change="loadBorrows">
+                            <el-option v-for="u in users" :key="u.id" :label="u.realName" :value="u.id" />
+                        </el-select>
+                    </div>
+                    <el-button type="primary" @click="showBorrowBookDialog">📕 借书</el-button>
+                </div>
+                <div>
+                    <el-table :data="filteredBorrows" stripe v-loading="borrowLoading" :max-height="500">
+                        <el-table-column label="ID" width="70">
+                            <template #default="scope">{{ scope.row.id }}</template>
+                        </el-table-column>
+                        <el-table-column label="借阅人" width="120">
+                            <template #default="scope">{{ scope.row.userName }}</template>
+                        </el-table-column>
+                        <el-table-column label="图书" min-width="180">
+                            <template #default="scope">{{ scope.row.bookTitle }}</template>
+                        </el-table-column>
+                        <el-table-column label="借阅日期" width="180">
+                            <template #default="scope">{{ formatDate(scope.row.borrowDate) }}</template>
+                        </el-table-column>
+                        <el-table-column label="归还日期" width="180">
+                            <template #default="scope">{{ scope.row.returnDate ? formatDate(scope.row.returnDate) : '-' }}</template>
+                        </el-table-column>
+                        <el-table-column label="状态" width="100">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.status === 'BORROWED' ? 'warning' : 'success'" size="small">
+                                    {{ scope.row.status === 'BORROWED' ? '借阅中' : '已归还' }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="120">
+                            <template #default="scope">
+                                <el-popconfirm v-if="scope.row.status === 'BORROWED'" title="确认归还此书？"
+                                    @confirm="returnBook(scope.row)">
+                                    <template #reference>
+                                        <el-button size="small" type="success">归还</el-button>
+                                    </template>
+                                </el-popconfirm>
+                                <el-tag v-else size="small" type="info">已归还</el-tag>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </el-tab-pane>
+
+            <!-- ========== 用户管理 ========== -->
+            <el-tab-pane label="👥 用户管理" name="users">
+                <div class="toolbar">
+                    <span style="color:#909399;">共 {{ users.length }} 位用户</span>
+                    <el-button type="primary" @click="showAddUserDialog">➕ 添加用户</el-button>
+                </div>
+                <div>
+                    <el-table :data="users" stripe v-loading="userLoading" :max-height="500">
+                        <el-table-column label="ID" width="70">
+                            <template #default="scope">{{ scope.row.id }}</template>
+                        </el-table-column>
+                        <el-table-column label="用户名" width="140">
+                            <template #default="scope">{{ scope.row.username }}</template>
+                        </el-table-column>
+                        <el-table-column label="姓名" width="120">
+                            <template #default="scope">{{ scope.row.realName }}</template>
+                        </el-table-column>
+                        <el-table-column label="电话" width="150">
+                            <template #default="scope">{{ scope.row.phone }}</template>
+                        </el-table-column>
+                        <el-table-column label="邮箱" min-width="180">
+                            <template #default="scope">{{ scope.row.email }}</template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="240">
+                            <template #default="scope">
+                                <el-button size="small" type="primary" @click="viewUserBorrows(scope.row)">借阅记录</el-button>
+                                <el-popconfirm title="确定删除此用户？" @confirm="deleteUser(scope.row)">
+                                    <template #reference>
+                                        <el-button size="small" type="danger">删除</el-button>
+                                    </template>
+                                </el-popconfirm>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </el-tab-pane>
+        </el-tabs>
+
+        <!-- ===== 添加/编辑图书对话框 ===== -->
+        <el-dialog v-model="bookDialogVisible" :title="isEditBook ? '编辑图书' : '添加图书'" width="580px"
+            destroy-on-close>
+            <el-form :model="bookForm" label-width="80px">
+                <el-form-item label="ISBN"><el-input v-model="bookForm.isbn" placeholder="如 978-7-xxx-xxxxx-x" /></el-form-item>
+                <el-form-item label="书名"><el-input v-model="bookForm.title" placeholder="请输入书名" /></el-form-item>
+                <el-form-item label="作者"><el-input v-model="bookForm.author" placeholder="请输入作者" /></el-form-item>
+                <el-form-item label="出版社"><el-input v-model="bookForm.publisher" placeholder="请输入出版社" /></el-form-item>
+                <el-form-item label="价格"><el-input-number v-model="bookForm.price" :min="0" :precision="2" /></el-form-item>
+                <el-form-item label="库存"><el-input-number v-model="bookForm.stockCount" :min="0" /></el-form-item>
+                <el-form-item label="描述"><el-input v-model="bookForm.description" type="textarea" :rows="3" /></el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="bookDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveBook" :loading="saving">保存</el-button>
+            </template>
+        </el-dialog>
+
+        <!-- ===== 借书对话框 ===== -->
+        <el-dialog v-model="borrowDialogVisible" title="📕 借书" width="520px" destroy-on-close>
+            <el-form :model="borrowForm" label-width="80px">
+                <el-form-item label="借阅人">
+                    <el-select v-model="borrowForm.userId" placeholder="请选择用户" filterable style="width:100%">
+                        <el-option v-for="u in users" :key="u.id" :label="`${u.realName} (${u.username})`"
+                            :value="u.id" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="图书">
+                    <el-select v-model="borrowForm.bookId" placeholder="请选择图书" filterable style="width:100%">
+                        <el-option v-for="b in availableBooks" :key="b.id"
+                            :label="`${b.title} - ${b.author} (库存:${b.stockCount})`" :value="b.id" />
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="borrowDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="confirmBorrow" :loading="saving">确认借出</el-button>
+            </template>
+        </el-dialog>
+
+        <!-- ===== 添加用户对话框 ===== -->
+        <el-dialog v-model="userDialogVisible" title="➕ 添加用户" width="480px" destroy-on-close>
+            <el-form :model="userForm" label-width="80px">
+                <el-form-item label="用户名"><el-input v-model="userForm.username" placeholder="登录用户名（英文）" /></el-form-item>
+                <el-form-item label="姓名"><el-input v-model="userForm.realName" placeholder="真实姓名" /></el-form-item>
+                <el-form-item label="电话"><el-input v-model="userForm.phone" placeholder="手机号码" /></el-form-item>
+                <el-form-item label="邮箱"><el-input v-model="userForm.email" placeholder="电子邮箱" /></el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="userDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveUser" :loading="saving">保存</el-button>
+            </template>
+        </el-dialog>
+
+        <!-- ===== 用户借阅记录对话框 ===== -->
+        <el-dialog v-model="userBorrowDialogVisible" :title="`📋 ${userBorrowInfo.name} 的借阅记录`" width="800px">
+            <el-table :data="userBorrowInfo.records" stripe max-height="400">
+                <el-table-column prop="bookTitle" label="图书" min-width="180" />
+                <el-table-column prop="borrowDate" label="借阅日期" width="180">
+                    <template #default="{ row }">{{ formatDate(row.borrowDate) }}</template>
+                </el-table-column>
+                <el-table-column prop="returnDate" label="归还日期" width="180">
+                    <template #default="{ row }">{{ row.returnDate ? formatDate(row.returnDate) : '-' }}</template>
+                </el-table-column>
+                <el-table-column prop="status" label="状态" width="100">
+                    <template #default="{ row }">
+                        <el-tag :type="row.status === 'BORROWED' ? 'warning' : 'success'" size="small">
+                            {{ row.status === 'BORROWED' ? '借阅中' : '已归还' }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-empty v-if="userBorrowInfo.records.length === 0" description="暂无借阅记录" />
+        </el-dialog>
+    </div>
+</div>
+
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+const API = 'http://localhost:8081/api';
+
+createApp({
+    setup() {
+        // ===== 状态 =====
+        const activeTab = ref('books');
+        const books = ref([]);
+        const users = ref([]);
+        const borrows = ref([]);
+        const loading = ref(false);
+        const borrowLoading = ref(false);
+        const userLoading = ref(false);
+        const saving = ref(false);
+        const searchQuery = ref('');
+
+        // 对话框
+        const bookDialogVisible = ref(false);
+        const borrowDialogVisible = ref(false);
+        const userDialogVisible = ref(false);
+        const userBorrowDialogVisible = ref(false);
+        const isEditBook = ref(false);
+
+        // 表单
+        const bookForm = ref({ id: null, isbn: '', title: '', author: '', publisher: '', price: 0, stockCount: 0, description: '' });
+        const borrowForm = ref({ userId: null, bookId: null });
+        const userForm = ref({ username: '', realName: '', phone: '', email: '' });
+        const borrowFilter = ref({ status: '', userId: '' });
+        const userBorrowInfo = ref({ name: '', records: [] });
+
+        // 统计
+        const stats = ref({ totalBooks: 0, availableBooks: 0, totalUsers: 0, activeBorrows: 0, totalBorrows: 0 });
+
+        // 计算属性
+        const availableBooks = computed(() => books.value.filter(b => b.stockCount > 0));
+        const filteredBorrows = computed(() => {
+            let list = borrows.value;
+            if (borrowFilter.value.status) list = list.filter(r => r.status === borrowFilter.value.status);
+            if (borrowFilter.value.userId) list = list.filter(r => r.userId === borrowFilter.value.userId);
+            return list;
+        });
+
+        // ===== API方法 =====
+        const apiGet = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(r.statusText); return r.json(); };
+        const apiPost = async (url, body) => {
+            const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!r.ok) { const t = await r.text(); throw new Error(t || r.statusText); }
+            return r.json();
+        };
+        const apiDelete = async (url) => { const r = await fetch(url, { method: 'DELETE' }); if (!r.ok) throw new Error(r.statusText); };
+        const apiPostParams = async (url) => {
+            const r = await fetch(url, { method: 'POST' });
+            if (!r.ok) { const t = await r.text(); throw new Error(t || r.statusText); }
+            return r.json();
+        };
+
+        // ===== 加载数据 =====
+        const loadBooks = async () => {
+            loading.value = true;
+            try { books.value = await apiGet(`${API}/books`); } catch (e) { ElementPlus.ElMessage.error('加载图书失败'); }
+            loading.value = false;
+        };
+
+        const searchBooks = async () => {
+            if (!searchQuery.value) { loadBooks(); return; }
+            loading.value = true;
+            try {
+                const url = `${API}/books/search/title?title=${encodeURIComponent(searchQuery.value)}`;
+                books.value = await apiGet(url);
+                ElementPlus.ElMessage.success(`找到 ${books.value.length} 本相关图书`);
+            } catch (e) {
+                ElementPlus.ElMessage.error('搜索失败'); loadBooks();
             }
-        }).use(ElementPlus).mount('#app');
-    </script>
+            loading.value = false;
+        };
+
+        const loadUsers = async () => {
+            userLoading.value = true;
+            try { users.value = await apiGet(`${API}/users`); } catch (e) { console.error(e); }
+            userLoading.value = false;
+        };
+
+        const loadBorrows = async () => {
+            borrowLoading.value = true;
+            try { borrows.value = await apiGet(`${API}/borrow-records`); } catch (e) { console.error(e); }
+            borrowLoading.value = false;
+        };
+
+        const loadStats = async () => {
+            try {
+                const [bks, usrs, brs] = await Promise.all([
+                    apiGet(`${API}/books`), apiGet(`${API}/users`), apiGet(`${API}/borrow-records`)
+                ]);
+                stats.value = {
+                    totalBooks: bks.length,
+                    availableBooks: bks.filter(b => b.stockCount > 0).length,
+                    totalUsers: usrs.length,
+                    activeBorrows: brs.filter(r => r.status === 'BORROWED').length,
+                    totalBorrows: brs.length
+                };
+            } catch (e) { console.error('统计加载失败', e); }
+        };
+
+        const refreshAll = () => { loadBooks(); loadUsers(); loadBorrows(); loadStats(); };
+
+        // ===== 图书操作 =====
+        const showAddBookDialog = () => {
+            isEditBook.value = false;
+            bookForm.value = { id: null, isbn: '', title: '', author: '', publisher: '', price: 0, stockCount: 0, description: '' };
+            bookDialogVisible.value = true;
+        };
+        const editBook = (book) => { isEditBook.value = true; bookForm.value = { ...book }; bookDialogVisible.value = true; };
+        const saveBook = async () => {
+            if (!bookForm.value.title || !bookForm.value.author) { ElementPlus.ElMessage.warning('请填写书名和作者'); return; }
+            saving.value = true;
+            try {
+                if (isEditBook.value) {
+                    await apiPost(`${API}/books/${bookForm.value.id}`, bookForm.value);
+                } else {
+                    await apiPost(`${API}/books`, bookForm.value);
+                }
+                ElementPlus.ElMessage.success(isEditBook.value ? '更新成功' : '添加成功');
+                bookDialogVisible.value = false; refreshAll();
+            } catch (e) { ElementPlus.ElMessage.error('保存失败：' + e.message); }
+            saving.value = false;
+        };
+        const deleteBook = async (book) => {
+            try { await apiDelete(`${API}/books/${book.id}`); ElementPlus.ElMessage.success('删除成功'); refreshAll(); }
+            catch (e) { ElementPlus.ElMessage.error('删除失败'); }
+        };
+
+        // ===== 借阅操作 =====
+        const showBorrowBookDialog = async () => {
+            await Promise.all([loadUsers(), loadBooks()]);
+            borrowForm.value = { userId: null, bookId: null };
+            borrowDialogVisible.value = true;
+        };
+        const openQuickBorrow = async (book) => {
+            await loadUsers();
+            borrowForm.value = { userId: null, bookId: book.id };
+            borrowDialogVisible.value = true;
+        };
+        const confirmBorrow = async () => {
+            if (!borrowForm.value.userId || !borrowForm.value.bookId) { ElementPlus.ElMessage.warning('请选择用户和图书'); return; }
+            saving.value = true;
+            try {
+                await apiPostParams(`${API}/borrow-records/borrow?userId=${borrowForm.value.userId}&bookId=${borrowForm.value.bookId}`);
+                ElementPlus.ElMessage.success('借书成功！');
+                borrowDialogVisible.value = false; refreshAll();
+            } catch (e) { ElementPlus.ElMessage.error('借书失败：' + e.message); }
+            saving.value = false;
+        };
+        const returnBook = async (record) => {
+            try {
+                await apiPostParams(`${API}/borrow-records/return/${record.id}`);
+                ElementPlus.ElMessage.success('归还成功！'); refreshAll();
+            } catch (e) { ElementPlus.ElMessage.error('归还失败：' + e.message); }
+        };
+
+        // ===== 用户操作 =====
+        const showAddUserDialog = () => {
+            userForm.value = { username: '', realName: '', phone: '', email: '' };
+            userDialogVisible.value = true;
+        };
+        const saveUser = async () => {
+            if (!userForm.value.username || !userForm.value.realName) { ElementPlus.ElMessage.warning('请填写用户名和姓名'); return; }
+            saving.value = true;
+            try {
+                await apiPost(`${API}/users`, userForm.value);
+                ElementPlus.ElMessage.success('用户添加成功！');
+                userDialogVisible.value = false; refreshAll();
+            } catch (e) { ElementPlus.ElMessage.error('添加失败：' + e.message); }
+            saving.value = false;
+        };
+        const deleteUser = async (user) => {
+            try { await apiDelete(`${API}/users/${user.id}`); ElementPlus.ElMessage.success('删除成功'); refreshAll(); }
+            catch (e) { ElementPlus.ElMessage.error('删除失败'); }
+        };
+        const viewUserBorrows = async (user) => {
+            try {
+                userBorrowInfo.value = { name: user.realName, records: await apiGet(`${API}/borrow-records/user/${user.id}`) };
+                userBorrowDialogVisible.value = true;
+            } catch (e) { ElementPlus.ElMessage.error('加载借阅记录失败'); }
+        };
+
+        // ===== 工具 =====
+        const formatDate = (d) => {
+            if (!d) return '-';
+            const date = new Date(d);
+            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+        };
+
+        // ===== 初始化 =====
+        onMounted(() => { refreshAll(); });
+
+        return {
+            activeTab, books, users, borrows, loading, borrowLoading, userLoading, saving, searchQuery,
+            bookDialogVisible, borrowDialogVisible, userDialogVisible, userBorrowDialogVisible, isEditBook,
+            bookForm, borrowForm, userForm, borrowFilter, userBorrowInfo, stats,
+            availableBooks, filteredBorrows,
+            loadBooks, searchBooks, loadBorrows, loadUsers, refreshAll,
+            showAddBookDialog, editBook, saveBook, deleteBook,
+            showBorrowBookDialog, openQuickBorrow, confirmBorrow, returnBook,
+            showAddUserDialog, saveUser, deleteUser, viewUserBorrows,
+            formatDate
+        };
+    }
+}).use(ElementPlus).mount('#app');
+</script>
 </body>
 </html>
